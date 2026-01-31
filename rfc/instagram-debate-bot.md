@@ -810,6 +810,19 @@ Follow this TDD workflow for all development:
 - Mock Instagram's webhook signature verification
 - Test various webhook scenarios (new comment, reply, edge cases)
 
+**Test Webhook Verification:**
+- Create unit tests for the webhook verification endpoint (GET request handler)
+- Mock the verification challenge flow with `hub.mode`, `hub.verify_token`, and `hub.challenge` parameters
+- Verify that the endpoint correctly returns the challenge value when verification succeeds
+- Test failure scenarios (incorrect token, missing parameters)
+
+**Test Comment Reply Creation:**
+- Write unit tests for functions that create replies to Instagram comments
+- Mock the Instagram Graph API POST request to `/{ig-comment-id}/replies`
+- Test successful reply creation and verify the response contains the comment ID
+- Test error handling (API failures, rate limits, permission errors)
+- Verify proper handling of reply limitations (top-level only, no hidden comments)
+
 **Example Webhook Test Payload:**
 
 ```python
