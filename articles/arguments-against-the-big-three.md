@@ -69,7 +69,7 @@ Some advocates argue that athletes in other sports also experience disc degenera
 At some point, we need to talk about actually *regenerating* discs as we age and through exercise. The fitness industry continues to hold a depressingly low bar—cherry-picking positives like muscle gains from these lifts while completely disregarding the negatives and the fact that they aren't able to improve joint integrity or health.
 
 ### 3.2: Evidence of Regeneration
-At Functional Patterns, we have a trial series of n=1 long-term trials that show actual regeneration of joint health, disc height, and scoliosis improvements that hold up in dynamic movements such as a full-speed sprint: [fp.evidence](https://instagram.com/evidence)
+At Functional Patterns, we have a trial series of n=1 long-term trials that show actual regeneration of joint health, disc height, and scoliosis improvements that hold up in dynamic movements such as a full-speed sprint: [fp.evidence](https://instagram.com/fp.evidence)
 
 ### 3.3: A Call to Action
 **When are we going to raise the bar in this industry?**
