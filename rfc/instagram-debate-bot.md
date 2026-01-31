@@ -626,7 +626,7 @@ All generated responses must pass these checks before being saved or posted:
 - Simplifies integration with multiple LLM providers
 
 **LLM Provider:**
-- **Primary Model:** Gemini Flash 2.0 (via OpenRouter)
+- **Primary Model:** Gemini 3 flash (via OpenRouter)
 - Cost-effective option suitable for high-volume comment processing
 - Good balance of quality and speed for debate responses
 - OpenRouter provides unified API access and potential fallback options
@@ -635,10 +635,8 @@ All generated responses must pass these checks before being saved or posted:
 ```python
 # Example configuration
 LLM_PROVIDER = "openrouter"
-MODEL_NAME = "google/gemini-flash-2.0"
+MODEL_NAME = "google/gemini-3-flash-preview"
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-MAX_TOKENS = 2000
-TEMPERATURE = 0.7  # Balanced creativity for debate responses
 ```
 
 ### 13.2 LangChain Integration
@@ -652,9 +650,7 @@ from langchain.schema import HumanMessage, SystemMessage
 # Initialize LLM client
 llm = ChatOpenRouter(
     model=MODEL_NAME,
-    openrouter_api_key=OPENROUTER_API_KEY,
-    temperature=TEMPERATURE,
-    max_tokens=MAX_TOKENS
+    openrouter_api_key=OPENROUTER_API_KEY
 )
 ```
 
