@@ -273,6 +273,22 @@ Instagram requires a verification step before sending webhooks:
    - Must be publicly accessible and use HTTPS
 
 2. **Implement Verification Handler:**
+   
+   When you configure webhooks in the App Dashboard, Instagram sends a GET request to verify your endpoint. The request includes these query parameters:
+   
+   - `hub.mode` - Will be "subscribe"
+   - `hub.verify_token` - The verify token you configured in the dashboard
+   - `hub.challenge` - A random string to echo back
+   
+   **Sample Verification Request:**
+   ```
+   GET https://yourdomain.com/webhook/instagram?
+     hub.mode=subscribe&
+     hub.challenge=1158201444&
+     hub.verify_token=meatyhamhock
+   ```
+   
+   **Verification Handler Implementation:**
    ```python
    @app.get("/webhook/instagram")
    def verify_webhook(request):
@@ -280,7 +296,9 @@ Instagram requires a verification step before sending webhooks:
        token = request.args.get('hub.verify_token')
        challenge = request.args.get('hub.challenge')
        
+       # Verify the mode and token
        if mode == 'subscribe' and token == VERIFY_TOKEN:
+           # Return the challenge value to complete verification
            return challenge, 200
        else:
            return "Forbidden", 403
@@ -291,6 +309,7 @@ Instagram requires a verification step before sending webhooks:
    - Subscribe to `comments` field for your Instagram account
    - Provide callback URL and verify token
    - Instagram will send GET request to verify
+   - Your endpoint must return the `hub.challenge` value to complete verification
 
 ### 7.2 Ongoing Webhook Reception
 
@@ -657,10 +676,9 @@ All generated responses must pass these checks before being saved or posted:
 **API Configuration:**
 ```python
 # Example configuration
-import openai
+from openrouter import OpenRouter
 
-client = openai.OpenAI(
-    base_url="https://openrouter.ai/api/v1",
+client = OpenRouter(
     api_key=os.getenv("OPENROUTER_API_KEY")
 )
 
@@ -673,12 +691,11 @@ TEMPERATURE = 0.7  # Balanced creativity for debate responses
 
 **Setup:**
 ```python
-import openai
+from openrouter import OpenRouter
 import os
 
 # Initialize OpenRouter client
-client = openai.OpenAI(
-    base_url="https://openrouter.ai/api/v1",
+client = OpenRouter(
     api_key=os.getenv("OPENROUTER_API_KEY")
 )
 
@@ -773,14 +790,6 @@ webhook_payload = {
 ```
 
 ### 14.4 Instagram API Response Formats
-
-**Webhook Subscription Requirements:**
-- App must have Instagram webhooks configured in App Dashboard
-- Subscribe to `comments` field
-- For Consumer apps: Must be in Live Mode
-- For Business apps: Must have Advanced Access level permissions
-- Required permissions: `instagram_manage_comments`
-- Connected Page must have Page subscriptions enabled
 
 **Comment Object Structure:**
 ```json
@@ -885,9 +894,8 @@ def test_webhook_comment_received():
 
 1. **Mock External APIs:** Never make real API calls in tests
 2. **Test Edge Cases:** Empty responses, rate limits, malformed data
-3. **Fast Execution:** Tests should run quickly (< 1 second per test)
-4. **Isolation:** Each test should be independent and not rely on others
-5. **Descriptive Names:** Test function names should clearly indicate what they test
+3. **Isolation:** Each test should be independent and not rely on others
+4. **Descriptive Names:** Test function names should clearly indicate what they test
 
 ---
 
