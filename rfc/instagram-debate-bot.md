@@ -345,6 +345,59 @@ def receive_webhook(request):
   &access_token={app-token}
   ```
 
+### 7.4 Replying to Comments
+
+**Creating Replies:**
+
+To post a reply to a comment, use the Instagram Graph API:
+
+```
+POST /{ig-comment-id}/replies?message={message}
+```
+
+This creates an IG Comment as a reply to an existing IG Comment.
+
+**Query String Parameters:**
+- `{message}` (required) — The text to be included in the reply
+
+**Limitations:**
+- You can only reply to top-level comments; replies to a reply will be added to the top-level comment
+- You cannot reply to hidden comments
+- You cannot reply to comments on a live video (use Instagram Messaging API for private replies instead)
+
+**Required Permissions:**
+
+A User access token from the User who created the comment, with:
+- `instagram_basic`
+- `instagram_manage_comments`
+- `pages_show_list`
+- `page_read_engagement`
+
+If the token is from a User whose Page role was granted via Business Manager, also required:
+- `ads_management` OR `ads_read`
+
+**Sample Request:**
+```
+POST graph.facebook.com/17870913679156914/replies?message=Research shows...
+```
+
+**Sample Response:**
+```json
+{
+  "id": "17873440459141021"
+}
+```
+
+**Reading Replies:**
+
+To get a list of replies on a comment:
+
+```
+GET /{ig-comment-id}/replies
+```
+
+Returns a list of IG Comments (replies) on an IG Comment.
+
 ---
 
 ## 8. Prompt Templates
@@ -829,73 +882,13 @@ tests/
     └── api_responses.json
 ```
 
-### 14.6 Example Test Cases
-
-**Unit Test Example (PyTest):**
-```python
-import pytest
-from src.validator import validate_citations
-
-def test_validate_citations_valid():
-    article_sections = {"§1.1": "...", "§1.2": "..."}
-    response = "According to §1.1, evidence shows..."
-    assert validate_citations(response, article_sections) == True
-
-def test_validate_citations_invalid():
-    article_sections = {"§1.1": "...", "§1.2": "..."}
-    response = "According to §9.9, evidence shows..."
-    assert validate_citations(response, article_sections) == False
-```
-
-**API Mock Test Example:**
-```python
-import pytest
-import requests_mock
-from src.instagram_api import get_post_caption
-
-def test_get_post_caption(requests_mock):
-    # Mock Instagram API response
-    requests_mock.get(
-        'https://graph.instagram.com/v12.0/media-id',
-        json={'caption': 'Test caption', 'id': 'media-id'}
-    )
-    
-    caption = get_post_caption('media-id')
-    assert caption == 'Test caption'
-```
-
-**Webhook Test Example:**
-```python
-import pytest
-from flask import Flask
-from src.webhook_receiver import app
-
-def test_webhook_comment_received():
-    client = app.test_client()
-    
-    payload = {
-        "object": "instagram",
-        "entry": [{
-            "changes": [{
-                "field": "comments",
-                "value": {
-                    "id": "comment-123",
-                    "text": "Test comment"
-                }
-            }]
-        }]
-    }
-    
-    response = client.post('/webhook/instagram', json=payload)
-    assert response.status_code == 200
-```
-
-### 14.7 Key Testing Principles
+### 14.6 Key Testing Principles
 
 1. **Mock External APIs:** Never make real API calls in tests
-2. **Test Edge Cases:** Empty responses, rate limits, malformed data
-3. **Isolation:** Each test should be independent and not rely on others
-4. **Descriptive Names:** Test function names should clearly indicate what they test
+2. **Mock OpenRouter SDK:** Mock out the OpenRouter SDK objects (e.g., `OpenRouter` client) in tests so that you only test your own logic, not the SDK itself
+3. **Test Edge Cases:** Empty responses, rate limits, malformed data
+4. **Isolation:** Each test should be independent and not rely on others
+5. **Descriptive Names:** Test function names should clearly indicate what they test
 
 ---
 
