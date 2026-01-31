@@ -4,7 +4,7 @@ This is a living document detailing the physiological, structural, and long-term
 
 ---
 
-## Topic 1: Chronic Disc Degeneration and Structural Spinal Pathology
+## 1: Chronic Disc Degeneration and Structural Spinal Pathology
 
 The primary argument against these lifts is their correlation with accelerated disc degeneration and irreversible structural changes to the spine, even under "perfect" supervision.
 
@@ -45,22 +45,33 @@ The prevalence of pain among practitioners is exceptionally high compared to oth
 
 ---
 
-### The Philosophical Argument: The Post Hoc Fallacy
-A common defense for these lifts is that "tissues adapt" or that "the body heals during deloads." However, the data contradicts this. 
+## 2: The Philosophical Argument: The Post Hoc Fallacy
 
-1.  **Adaptation vs. Destruction:** While tissues *can* adapt (Study 13 shows collagen can reorganize under compression [Source](https://pubmed.ncbi.nlm.nih.gov/6729579/)), the presence of irreversible structural changes in supervised, elite, and adolescent populations suggests that the "adaptation" cannot keep pace with the destruction caused by these specific movement patterns.
-2.  **The Better Alternative:** If the goal is strength and health, why choose exercises that gamble with spinal integrity? **Functional Patterns (FP) Training** doesn't just manage compression—it actually decompresses your spine as you train heavily. FP is real heavy training that builds muscle mass by recruiting high threshold motor units (strength), while focusing on training the body to use its musculature to decompress the spine rather than crush it.
-3.  **Correcting Deformity:** Instead of asking the spine to "build collagen" to survive a heavy squat, it is more logical to improve the underlying mechanics (gait) that lead to the dysfunction in the first place.
-4.  **The "Other Sports" Fallacy:** Some advocates argue that athletes in other sports also experience disc degeneration. However, this doesn't justify adding these lifts to your training. Why would you degenerate your discs *in addition* to the demands of your sport?
+A common defense for these lifts is that "tissues adapt" or that "the body heals during deloads." However, the data contradicts this.
+
+### 2.1: Adaptation vs. Destruction
+While tissues *can* adapt (Study 13 shows collagen can reorganize under compression [Source](https://pubmed.ncbi.nlm.nih.gov/6729579/)), the presence of irreversible structural changes in supervised, elite, and adolescent populations suggests that the "adaptation" cannot keep pace with the destruction caused by these specific movement patterns.
+
+### 2.2: The Better Alternative
+If the goal is strength and health, why choose exercises that gamble with spinal integrity? **Functional Patterns (FP) Training** doesn't just manage compression—it actually decompresses your spine as you train heavily. FP is real heavy training that builds muscle mass by recruiting high threshold motor units (strength), while focusing on training the body to use its musculature to decompress the spine rather than crush it.
+
+### 2.3: Correcting Deformity
+Instead of asking the spine to "build collagen" to survive a heavy squat, it is more logical to improve the underlying mechanics (gait) that lead to the dysfunction in the first place.
+
+### 2.4: The "Other Sports" Fallacy
+Some advocates argue that athletes in other sports also experience disc degeneration. However, this doesn't justify adding these lifts to your training. Why would you degenerate your discs *in addition* to the demands of your sport?
 
 ---
 
-## Raising the Bar: From Damage Control to Actual Regeneration
+## 3: Raising the Bar: From Damage Control to Actual Regeneration
 
+### 3.1: The Industry's Low Standards
 At some point, we need to talk about actually *regenerating* discs as we age and through exercise. The fitness industry continues to hold a depressingly low bar—cherry-picking positives like muscle gains from these lifts while completely disregarding the negatives and the fact that they aren't able to improve joint integrity or health.
 
+### 3.2: Evidence of Regeneration
 At Functional Patterns, we have a trial series of n=1 long-term trials that show actual regeneration of joint health, disc height, and scoliosis improvements that hold up in dynamic movements such as a full-speed sprint: [fp.evidence](https://instagram.com/evidence)
 
+### 3.3: A Call to Action
 **When are we going to raise the bar in this industry?**
 
 ---
