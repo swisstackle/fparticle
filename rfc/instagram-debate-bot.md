@@ -203,25 +203,31 @@ These constraints are **non-negotiable** and define the architecture:
      - Previous bot responses in the same thread (if any)
    - Build conversation context string
 
-   **3.2 Relevance Check (Optional LLM Call):**
+   **3.2 Post Topic Check (LLM Call):**
+   - First, verify the post is about the same topic as the article
+   - Prompt LLM: "Is this Instagram post about [article topic]? Post caption: [caption]"
+   - If NO → Skip all comments from this post, log reason
+   - If YES → Continue to comment relevance check
+
+   **3.3 Comment Relevance Check (LLM Call):**
    - Prompt LLM: "Does this comment present a claim or question related to [article topic]?"
    - If NO → Log to `no_match_log.json`, continue to next comment
    - If YES → Proceed to response generation
 
-   **3.3 Generate Response:**
-   - Build prompt using template (see §7)
+   **3.4 Generate Response:**
+   - Build prompt using template (see §8)
    - Include: Full article, comment text, thread context
-   - Call LLM API (e.g., OpenAI GPT-4, Anthropic Claude)
+   - Call LLM API via OpenRouter
    - Parse response
 
-   **3.4 Validate Response:**
+   **3.5 Validate Response:**
    - Check all citations exist in article (e.g., "§1.1.1" is a valid section)
    - Verify no hallucinated facts
    - Check character length (Instagram limit: 2,200 chars)
    - Ensure respectful tone (no profanity, insults)
    - If validation fails → Log error, mark comment as failed
 
-   **3.5 Store Result:**
+   **3.6 Store Result:**
    - Append to `audit_log.json` with full metadata:
      ```json
      {
@@ -362,14 +368,38 @@ PREVIOUS DISCUSSION IN THIS THREAD:
 
 ---
 
-Generate your response below. Start with a brief acknowledgment of the user's point, then present counter-arguments with citations. Be friendly and curious, not combative.
+Generate your response below. Be direct and concise - no greetings, acknowledgments, or filler words. Present counter-arguments with citations immediately. Keep responses short and to the point, even if it sounds snippy.
 
 RESPONSE:
 ```
 
-### 8.2 Relevance Check Prompt
+### 8.2 Post Topic Check Prompt
 
-**File:** `templates/match_check_prompt.txt`
+**File:** `templates/post_topic_check_prompt.txt`
+
+```
+You are a filter bot determining if an Instagram post is about the same topic as a specific article.
+
+ARTICLE TOPIC:
+{{ARTICLE_TITLE}}
+
+ARTICLE SUMMARY:
+{{ARTICLE_FIRST_PARAGRAPH}}
+
+INSTAGRAM POST CAPTION:
+"{{POST_CAPTION}}"
+
+QUESTION:
+Is this Instagram post about the same topic as this article? Consider the main subject matter, not just tangential mentions.
+
+Answer ONLY with "YES" or "NO", followed by a one-sentence explanation.
+
+ANSWER:
+```
+
+### 8.3 Comment Relevance Check Prompt
+
+**File:** `templates/comment_relevance_check_prompt.txt`
 
 ```
 You are a filter bot determining if an Instagram comment is relevant to a specific article.
@@ -391,21 +421,14 @@ Answer ONLY with "YES" or "NO", followed by a one-sentence explanation.
 ANSWER:
 ```
 
-### 8.3 Response Format
+### 8.4 Response Format
 
 All LLM responses should follow this structure:
 
 ```
-@{{USERNAME}} [Acknowledgment or greeting]
+@{{USERNAME}} Research shows that {{CLAIM}}. According to §1.1.1, {{EVIDENCE}}.
 
-[Main argument with citation, e.g.:]
-Research actually shows that {{CLAIM}}. According to §1.1.1, {{EVIDENCE}}.
-
-[Additional point if needed:]
-There's also the issue of {{SECOND_CLAIM}}. The data in §2.3 indicates {{EVIDENCE}}.
-
-[Closing question:]
-What's your take on {{QUESTION}}?
+The data in §2.3 indicates {{EVIDENCE}}.
 
 ---
 🤖 This is an automated response. Full article: {{ARTICLE_LINK}}
@@ -621,12 +644,12 @@ All generated responses must pass these checks before being saved or posted:
 ### 13.1 Technology Stack
 
 **LLM Framework:**
-- **LangChain:** Use LangChain for orchestrating LLM interactions, prompt management, and response parsing
-- Provides structured prompt templates and chain composition
-- Simplifies integration with multiple LLM providers
+- **OpenRouter SDK:** Use the OpenRouter SDK directly for LLM interactions and prompt management
+- Provides simple API interface without additional abstraction layers
+- Direct integration with multiple LLM providers through a unified API
 
 **LLM Provider:**
-- **Primary Model:** Gemini 3 flash (via OpenRouter)
+- **Primary Model:** Gemini Flash 2.0 (via OpenRouter)
 - Cost-effective option suitable for high-volume comment processing
 - Good balance of quality and speed for debate responses
 - OpenRouter provides unified API access and potential fallback options
@@ -634,51 +657,241 @@ All generated responses must pass these checks before being saved or posted:
 **API Configuration:**
 ```python
 # Example configuration
-LLM_PROVIDER = "openrouter"
-MODEL_NAME = "google/gemini-3-flash-preview"
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+import openai
+
+client = openai.OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY")
+)
+
+MODEL_NAME = "google/gemini-flash-2.0"
+MAX_TOKENS = 2000
+TEMPERATURE = 0.7  # Balanced creativity for debate responses
 ```
 
-### 13.2 LangChain Integration
+### 13.2 OpenRouter SDK Integration
 
 **Setup:**
 ```python
-from langchain.chat_models import ChatOpenRouter
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema import HumanMessage, SystemMessage
+import openai
+import os
 
-# Initialize LLM client
-llm = ChatOpenRouter(
-    model=MODEL_NAME,
-    openrouter_api_key=OPENROUTER_API_KEY
+# Initialize OpenRouter client
+client = openai.OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY")
 )
+
+def generate_response(prompt: str, max_tokens: int = 2000) -> str:
+    """Generate LLM response using OpenRouter."""
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {"role": "system", "content": "You are a debate assistant bot."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=max_tokens,
+        temperature=TEMPERATURE
+    )
+    return response.choices[0].message.content
 ```
 
 **Prompt Template Usage:**
-- Load prompt templates from `templates/` directory
-- Use LangChain's `ChatPromptTemplate` for structured prompts
-- Support for variable substitution and multi-turn conversations
+- Load prompt templates from `templates/` directory as plain text files
+- Perform string substitution for variables ({{VARIABLE}})
+- Support for multi-turn conversations by building message arrays
 
-**Chain Architecture:**
-1. **Relevance Check Chain:** Lightweight filter to determine if comment is debatable
-2. **Response Generation Chain:** Main debate response with article context
-3. **Validation Chain:** Verify citations and check for hallucinations
-
-### 13.3 Cost Optimization
-
-**Estimated Costs (Gemini Flash 2.0 via OpenRouter):**
-- Input: ~$0.075 per 1M tokens
-- Output: ~$0.30 per 1M tokens
-- Average cost per comment: ~$0.003 (assuming 30K input + 500 output tokens)
-
-**Budget Management:**
-- Set daily token limit in configuration
-- Track cumulative usage in audit log
-- Alert when approaching budget threshold
+**Processing Architecture:**
+1. **Post Topic Check:** Verify post caption matches article topic before processing comments
+2. **Relevance Check:** Lightweight filter to determine if comment is debatable
+3. **Response Generation:** Main debate response with article context
+4. **Validation:** Verify citations and check for hallucinations
 
 ---
 
-## 14. References & Resources
+## 14. Unit Testing & API Testing
+
+### 14.1 Test-Driven Development Process
+
+Follow this TDD workflow for all development:
+
+1. **Create Method Signatures:** Define all function signatures with type hints but no implementation
+2. **Write Tests First:** Create unit tests and API tests with mocks and stubs
+3. **Run Tests (Expect Failures):** Execute tests to verify they fail without implementation
+4. **Implement Functions:** Write actual implementation guided by test requirements
+5. **Iterate:** Use test feedback to refine implementation until all tests pass
+
+### 14.2 Testing Framework
+
+**Unit Testing:**
+- **Framework:** PyTest
+- **Purpose:** Test individual functions and methods in isolation
+- **Coverage Target:** Aim for high coverage of business logic
+
+**API Testing:**
+- **Framework:** PyTest with `requests-mock`
+- **Purpose:** Test API interactions with mocked HTTP responses
+- **Mock:** Instagram Graph API and OpenRouter API responses
+
+### 14.3 Webhook Testing
+
+**Test Instagram Webhooks:**
+- Write tests that POST fake webhook payloads directly to your webhook endpoint
+- Mock Instagram's webhook signature verification
+- Test various webhook scenarios (new comment, reply, edge cases)
+
+**Example Webhook Test Payload:**
+
+```python
+# Test payload for Instagram comment webhook
+webhook_payload = {
+    "object": "instagram",
+    "entry": [
+        {
+            "id": "instagram-business-account-id",
+            "time": 1704067200,
+            "changes": [
+                {
+                    "value": {
+                        "from": {
+                            "id": "user-id",
+                            "username": "test_user"
+                        },
+                        "media": {
+                            "id": "media-id",
+                            "media_product_type": "FEED"
+                        },
+                        "id": "comment-id",
+                        "text": "This is a test comment"
+                    },
+                    "field": "comments"
+                }
+            ]
+        }
+    ]
+}
+```
+
+### 14.4 Instagram API Response Formats
+
+**Webhook Subscription Requirements:**
+- App must have Instagram webhooks configured in App Dashboard
+- Subscribe to `comments` field
+- For Consumer apps: Must be in Live Mode
+- For Business apps: Must have Advanced Access level permissions
+- Required permissions: `instagram_manage_comments`
+- Connected Page must have Page subscriptions enabled
+
+**Comment Object Structure:**
+```json
+{
+  "id": "comment-id",
+  "text": "Comment text here",
+  "timestamp": "2024-01-01T12:00:00+0000",
+  "from": {
+    "id": "user-id",
+    "username": "username"
+  },
+  "media": {
+    "id": "media-id"
+  }
+}
+```
+
+### 14.5 Test Organization
+
+**Directory Structure:**
+```
+tests/
+├── unit/
+│   ├── test_article_parser.py
+│   ├── test_prompt_builder.py
+│   ├── test_validator.py
+│   └── test_state_manager.py
+├── api/
+│   ├── test_instagram_api.py
+│   ├── test_openrouter_api.py
+│   └── test_webhook_receiver.py
+├── integration/
+│   └── test_full_pipeline.py
+└── fixtures/
+    ├── sample_article.md
+    ├── webhook_payloads.json
+    └── api_responses.json
+```
+
+### 14.6 Example Test Cases
+
+**Unit Test Example (PyTest):**
+```python
+import pytest
+from src.validator import validate_citations
+
+def test_validate_citations_valid():
+    article_sections = {"§1.1": "...", "§1.2": "..."}
+    response = "According to §1.1, evidence shows..."
+    assert validate_citations(response, article_sections) == True
+
+def test_validate_citations_invalid():
+    article_sections = {"§1.1": "...", "§1.2": "..."}
+    response = "According to §9.9, evidence shows..."
+    assert validate_citations(response, article_sections) == False
+```
+
+**API Mock Test Example:**
+```python
+import pytest
+import requests_mock
+from src.instagram_api import get_post_caption
+
+def test_get_post_caption(requests_mock):
+    # Mock Instagram API response
+    requests_mock.get(
+        'https://graph.instagram.com/v12.0/media-id',
+        json={'caption': 'Test caption', 'id': 'media-id'}
+    )
+    
+    caption = get_post_caption('media-id')
+    assert caption == 'Test caption'
+```
+
+**Webhook Test Example:**
+```python
+import pytest
+from flask import Flask
+from src.webhook_receiver import app
+
+def test_webhook_comment_received():
+    client = app.test_client()
+    
+    payload = {
+        "object": "instagram",
+        "entry": [{
+            "changes": [{
+                "field": "comments",
+                "value": {
+                    "id": "comment-123",
+                    "text": "Test comment"
+                }
+            }]
+        }]
+    }
+    
+    response = client.post('/webhook/instagram', json=payload)
+    assert response.status_code == 200
+```
+
+### 14.7 Key Testing Principles
+
+1. **Mock External APIs:** Never make real API calls in tests
+2. **Test Edge Cases:** Empty responses, rate limits, malformed data
+3. **Fast Execution:** Tests should run quickly (< 1 second per test)
+4. **Isolation:** Each test should be independent and not rely on others
+5. **Descriptive Names:** Test function names should clearly indicate what they test
+
+---
+
+## 15. References & Resources
 
 **Instagram Platform Documentation:**
 - Webhooks: https://developers.facebook.com/docs/graph-api/webhooks/
@@ -695,7 +908,8 @@ llm = ChatOpenRouter(
 - FastAPI: https://fastapi.tiangolo.com/
 - Requests: https://docs.python-requests.org/
 - Python-dotenv: https://pypi.org/project/python-dotenv/
-- LangChain: https://python.langchain.com/docs/get_started/introduction
+- PyTest: https://docs.pytest.org/
+- requests-mock: https://requests-mock.readthedocs.io/
 
 **Best Practices:**
 - Instagram Platform Terms: https://developers.facebook.com/terms/
