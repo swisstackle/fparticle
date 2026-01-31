@@ -596,9 +596,93 @@ All generated responses must pass these checks before being saved or posted:
 
 **Tech Stack:** Simple web UI (Flask + Bootstrap, or React)
 
+### 12.2 Manual Workflows
+
+**Daily Review (Recommended):**
+1. Check `audit_log.json` for rejected responses
+2. Review `no_match_log.json` to adjust relevance thresholds
+3. Monitor token usage and costs
+4. Read sample of posted responses for quality
+
+**Weekly Review:**
+1. Analyze response patterns (which citations used most)
+2. Update article if common counter-arguments arise
+3. Refine prompt templates based on tone/style feedback
+
+**Monthly Review:**
+1. Evaluate bot effectiveness (engagement metrics on Instagram)
+2. Consider expanding to multiple articles
+3. Update validation rules based on edge cases
+
 ---
 
-## 13. References & Resources
+## 13. Implementation Details for LLM Integration
+
+### 13.1 Technology Stack
+
+**LLM Framework:**
+- **LangChain:** Use LangChain for orchestrating LLM interactions, prompt management, and response parsing
+- Provides structured prompt templates and chain composition
+- Simplifies integration with multiple LLM providers
+
+**LLM Provider:**
+- **Primary Model:** Gemini Flash 2.0 (via OpenRouter)
+- Cost-effective option suitable for high-volume comment processing
+- Good balance of quality and speed for debate responses
+- OpenRouter provides unified API access and potential fallback options
+
+**API Configuration:**
+```python
+# Example configuration
+LLM_PROVIDER = "openrouter"
+MODEL_NAME = "google/gemini-flash-2.0"
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+MAX_TOKENS = 2000
+TEMPERATURE = 0.7  # Balanced creativity for debate responses
+```
+
+### 13.2 LangChain Integration
+
+**Setup:**
+```python
+from langchain.chat_models import ChatOpenRouter
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import HumanMessage, SystemMessage
+
+# Initialize LLM client
+llm = ChatOpenRouter(
+    model=MODEL_NAME,
+    openrouter_api_key=OPENROUTER_API_KEY,
+    temperature=TEMPERATURE,
+    max_tokens=MAX_TOKENS
+)
+```
+
+**Prompt Template Usage:**
+- Load prompt templates from `templates/` directory
+- Use LangChain's `ChatPromptTemplate` for structured prompts
+- Support for variable substitution and multi-turn conversations
+
+**Chain Architecture:**
+1. **Relevance Check Chain:** Lightweight filter to determine if comment is debatable
+2. **Response Generation Chain:** Main debate response with article context
+3. **Validation Chain:** Verify citations and check for hallucinations
+
+### 13.3 Cost Optimization
+
+**Estimated Costs (Gemini Flash 2.0 via OpenRouter):**
+- Input: ~$0.075 per 1M tokens
+- Output: ~$0.30 per 1M tokens
+- Average cost per comment: ~$0.003 (assuming 30K input + 500 output tokens)
+
+**Budget Management:**
+- Set daily token limit in configuration
+- Track cumulative usage in audit log
+- Alert when approaching budget threshold
+
+---
+
+## 14. References & Resources
 
 **Instagram Platform Documentation:**
 - Webhooks: https://developers.facebook.com/docs/graph-api/webhooks/
@@ -608,11 +692,14 @@ All generated responses must pass these checks before being saved or posted:
 **LLM APIs:**
 - OpenAI: https://platform.openai.com/docs/
 - Anthropic Claude: https://docs.anthropic.com/
+- OpenRouter: https://openrouter.ai/docs
+- Google Gemini: https://ai.google.dev/docs
 
 **Python Libraries:**
 - FastAPI: https://fastapi.tiangolo.com/
 - Requests: https://docs.python-requests.org/
 - Python-dotenv: https://pypi.org/project/python-dotenv/
+- LangChain: https://python.langchain.com/docs/get_started/introduction
 
 **Best Practices:**
 - Instagram Platform Terms: https://developers.facebook.com/terms/
